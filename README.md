@@ -1,30 +1,31 @@
-# django-ok-seo
+# django-ok-payparts
 
-This app allows you to add meta tags and OpenGraph properties to your HTML responses.
+Simple django integration for API "Оплата Частями в Интернете": [Схема взаимодействия №1 (Создание платежа по сервису Оплата частями/Мгновенная рассрочка)](https://bw.gitbooks.io/api-oc/content/pay.html)
 
 ## Installation
 
 Install with pip:
 
 ```shell
-$ pip install django-ok-seo
+$ pip install django-ok-payparts
 ```
-
-If you want to make seo models translatable, you need to install [django-modeltranslation](https://github.com/deschler/django-modeltranslation) package. After that run:
-```shell
-$ python manage.py makemigrations
-$ python manage.py migrate
-```
-to create new feelds in seo models for each language.
 
 Update INSTALLED_APPS:
 
 ```python
 INSTALLED_APPS = [
     ...
-    'seo',
-    'modeltranslation',  # optional
-    'django_jinja',  # optional for jinja2 global function
+    'payparts',
+    ...
+]
+```
+
+Add `payparts.urls` to your project urlpatterns:
+
+```python
+urlpatterns = [
+    ...
+    path('', include('payparts.urls')),
     ...
 ]
 ```
@@ -36,222 +37,77 @@ $ python manage.py migrate
 
 ### Available settings
 
-`SEO_VIEWS_CHOICES` - Tuple of tuples. Where the first value is the 
-value to use in code and second is is verbose (translated).
-For example:
-```python
-SEO_VIEWS_CHOICES = (
-    ('index', 'Index'),
-    ('faq', 'Faq'),
-)
-```
+`PAYPARTS_API_PASSWORD` - Password of your store.
 
-`SEO_MODELS` - List of models names to limit content type choices for 'ModelInstanceSeo'.
+`PAYPARTS_API_STORE_ID` - Your store's ID.
 
-`SEO_DEFAULT_IMAGE` - path to default image, which will be used for 'og:image' property.
+`PAYPARTS_API_URL` - Url for creation of a payment. By default: `https://payparts2.privatbank.ua/ipp/v2/`.
 
-`SEO_IMAGE_WIDTH` - value of `width` for image. `1200` by default.
+`PAYPARTS_API_REDIRECT_URL` - Url to redirect after a success payment. By default: `https://payparts2.privatbank.ua/ipp/v2/payment`.
 
-`SEO_IMAGE_HEIGHT` - value of `height` for image. `630` by default.
+### Usage
 
-`SEO_IMAGE_EXTENSIONS` - List of allowed image extensions for ImageField in seo model. 
+#### How to create a payment
 
-By default:
+1. Prepare your order's data:
 
 ```python
-['jpg', 'jpeg', 'png']
-```
-
-`SEO_OG_TYPES` - Tuple of tuples of open graph object types.
-
-By default:
-
-```python
-DEFAULT_OBJECT_TYPES = (
-    ('website', pgettext_lazy('OG types', 'Website')),
-    ('article', pgettext_lazy('OG types', 'Article'))
-)
-```
-
-`SEO_TWITTER_TYPES` - Tuple of tuples of twitter card types.
-
-By default:
-
-```python
-DEFAULT_TWITTER_TYPES = (
-    ('summary', pgettext_lazy('Twitter card types', 'Summary Card')),
-    ('summary_large_image', pgettext_lazy('Twitter card types', 'Summary Card with Large Image')),
-    ('player', pgettext_lazy('Twitter card types', 'Player')),
-    ('app', pgettext_lazy('Twitter card types', 'App')),
-)
-```
-`SEO_FB_APP_ID` - Common Facebook application id. Also, You can set custom id in facebook_app_id field for each seo instance.
-
-`SEO_HTML_ADMIN_WIDGET` -  dictionary with default widget for `top_text` and `bottom_text` text fields in django admin interface.
-
-For example:
-
-```python
-SEO_HTML_ADMIN_WIDGET = {
-    'widget': 'TinyMCE',
-    'widget_path': 'tinymce.widgets'
+data = {
+    "order_id": f"order-123",
+    "amount": 400.00,
+    "parts_count": 2,  # optional, default value is '2'
+    "merchant_type": "II",  # optional, default value is 'II'
+    "products": [
+        {
+            "name": "Телевизор",
+            "count": 2,
+            "price": 100.00
+        },
+        {
+            "name": "Микроволновка",
+            "count": 1,
+            "price": 200.00
+        }
+    ],
+    # also optional fields (can be set in your cabinet):
+    "response_url": "http://shop.com/response",  
+    "redirect_url": "http://shop.com/redirect",
 }
 ```
 
-TODO:
-
-* etc
-
-### Basic example to use:
-
-Admin inline:
+2. Get your redirect url:
 
 ```python
-# admin.py
+from payparts.use_cases import GetRedirectUrlUseCase
 
-from django.contrib import admin
-
-from seo.admin import ModelInstanceSeoInline
-
-from apps.article.models import Article
-
-@admin.register(Article)
-class ArticleAdmin(admin.ModelAdmin):
-    inlines = [ModelInstanceSeoInline]
+redirect_url = GetRedirectUrlUseCase().execute(data)
 ```
 
-Views:
-```python
-# views.py
+3. Redirect a user to the url.
 
-from django.views.generic import DetailView, TemplateView
+#### How to process a callbalk
 
-from seo.mixins.views import ViewSeoMixin, ModelInstanceViewSeoMixin
+Whenever a callback is processed a signal will be sent with the result of the transaction.
 
-from apps.article.models import Article
+There are two signals (`payparts.signals`):
 
+1) `pay_parts_success_callback` - if signature is valid.
+2) `pay_parts_invalid_callback` - if signature is not valid.
 
-class IndexView(ViewSeoMixin, TemplateView):
-    seo_view = 'index'
-    template_name = 'index.html'
-
-
-class IndexViewJinja(ViewSeoMixin, TemplateView):
-    seo_view = 'index'
-    template_name = 'jinja/index.jinja'
-
-
-class ArticleDetailView(ModelInstanceViewSeoMixin, DetailView):
-    template_name = 'article.html'
-    model = Article
-    pk_url_kwarg = 'id'
-
-
-class ArticleDetailViewJinja(ModelInstanceViewSeoMixin, DetailView):
-    template_name = 'jinja/article.jinja'
-    model = Article
-    pk_url_kwarg = 'id'
-```
-
-Your templates:
-
-### *.html
-
-```html
-{% load seo %}
-<head>
-    <meta charset="UTF-8">
-    {% get_seo_data seo %}
-</head>
-
-<!-- Optional: -->
-...
-<h1>{{ seo.h1 }}</h1>
-...
-<div id='seo_text'>
-    {{ seo.seo_text|safe }}
-</div>
-```
-
-### *.jinja
-
-```django
-<head>
-    <meta charset="UTF-8">
-    {{ get_jinja_seo_data(seo) }}
-</head>
-...
-<!-- Optional: -->
-...
-<h1>{{ seo.h1 }}</h1>
-...
-<div id='seo_text'>
-    {{ seo.seo_text|safe }}
-</div>
-```
-
-### View seo
-
-To add some meta tags to your view, just go to `/admin/seo/viewseo/add/`.
-
-### Inheritance
-
-You can inherit your models from `SeoTagsMixin` and override necessary methods to set custom seo data for your objects.
+Connect the signals to actions to perform the needed operations when a successful payment is received:
 
 ```python
-from django.db import models
+from payparts.signals import pay_parts_success_callback, pay_parts_invalid_callback
 
-from seo.mixins.models import SeoTagsMixin
+from orders.models import Order
 
 
-class Article(SeoTagsMixin, models.Model):
-    preview = models.ImageField()
-    short_description = models.TextField(max_length=1000)
-    ...
+def success_callback(sender, log, request, **kwargs):
+    # ensure success state
+    if log.is_success:
+        order = Order.objects.get(pk=log.order_id)
+        order.set_success_payment_state()
 
-    def get_meta_description(self) -> str:
-        """
-        Return meta description
-        """
-        return self.short_description
+pay_parts_success_callback.connect(success_callback)
 
-    def get_meta_image_field(self):
-        """
-        Return image field instance to get image url
-        """
-        return self.preview
 ```
-And in a template for your DetailView, you can use:
-```html
-<head>
-    <meta charset="UTF-8">
-    {% get_seo_data object %}
-</head>
-```
-where object is your default `context_object_name `.
-
-Also, you can use this way with `ModelInstanceViewSeoMixin` to still use `ModelInstanceSeo`, but get some data from a content object. To reach this goal, you need to override next methods:
-```python
-def get_meta_title(self) -> str:
-    """
-    Return meta title
-    """
-    return _('{} < Some super title').format(str(self))
-
-def get_meta_description(self) -> str:
-    """
-    Return meta description
-    """
-    return _(
-        '{} ➤ Wow! '
-        '✔ Amazing! '
-        '❖ Marvelous!'
-    ).format(str(self))
-
-def get_h1_title(self) -> str:
-    """
-    Return  h1 title
-    """
-    return str(self)
-```
-> If you want to get image from the content object, you may left the image field empty in a `ModelInstanceSeo` instance. If your image field has some specific name, you need to define a property with a name `image`.  

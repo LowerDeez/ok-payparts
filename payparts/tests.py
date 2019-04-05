@@ -32,7 +32,7 @@ class GetRedirectUrlUseCaseTestCase(TestCase):
                 }
             ],
             "response_url": "http://shop.com/response",
-            "redirect_url": "http://shop.com/redirect",
+            "redirect_url": "http://shop.com/redirect"
         }
 
     def test_success_payment_create(self):
@@ -54,7 +54,8 @@ class PayPartsCallbackViewTestCase(TestCase):
     def setUp(self) -> None:
         self.url = reverse('pay-parts:callback')
         self.factory = RequestFactory()
-        self.data = {
+        # assumes, that signatures will match
+        self.success_data = {
             "status": "canceled",
             "message": "Клиент не завершил оплату",
             "orderId": "254",
@@ -62,18 +63,43 @@ class PayPartsCallbackViewTestCase(TestCase):
             "signature": "r9B3fKjTz/qDLfh11Vs9t+izCVI=",
             "paymentState": "CANCELED"
         }
+        # assumes, that signatures will not match
+        self.fail_data = {
+            "storeId": "sdfgw456dsfv23",
+            "orderId": "ORDER-3196fa3007bc4b6dab8",
+            "paymentState": "FAIL",
+            "message": "Платеж не найден",
+            "signature": "2CnBRCAqvHjEcGJZk="
+        }
 
-    def test_view(self):
+    def test_success_callback_view(self):
         request = self.factory.post(
             self.url,
-            data=json.dumps(self.data),
-            content_type='application/json'
+            data=json.dumps(self.success_data),
+            content_type='application/json; charset=UTF-8',
         )
         with mock.patch('payparts.signals.pay_parts_success_callback.send', autospec=True) as mocked_handler:
             response = PayPartsCallbackView.as_view()(request)
-            self.assertEqual(json.loads(response.content), self.data)
+            self.assertEqual(json.loads(response.content), self.success_data)
             self.assertEqual(Log.objects.count(), 1)
             log = Log.objects.first()
             self.assertEqual(log.type, 'callback')
+            self.assertTrue(log.is_canceled)
+            self.assertEquals(mocked_handler.call_count, 1)
+            mocked_handler.assert_called_with(sender=Log, log=Log.objects.first(), request=request)
+
+    def test_fail_callback_view(self):
+        request = self.factory.post(
+            self.url,
+            data=json.dumps(self.fail_data),
+            content_type='application/json; charset=UTF-8'
+        )
+        with mock.patch('payparts.signals.pay_parts_invalid_callback.send', autospec=True) as mocked_handler:
+            response = PayPartsCallbackView.as_view()(request)
+            self.assertEqual(json.loads(response.content), self.fail_data)
+            self.assertEqual(Log.objects.count(), 1)
+            log = Log.objects.first()
+            self.assertEqual(log.type, 'callback')
+            self.assertTrue(log.is_fail)
             self.assertEquals(mocked_handler.call_count, 1)
             mocked_handler.assert_called_with(sender=Log, log=Log.objects.first(), request=request)

@@ -2,6 +2,10 @@ from django.contrib import admin
 
 from payparts.models import Log
 
+__all__ = (
+    'LogAdmin',
+)
+
 
 @admin.register(Log)
 class LogAdmin(admin.ModelAdmin):

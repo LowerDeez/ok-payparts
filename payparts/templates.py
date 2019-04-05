@@ -2,6 +2,13 @@ from functools import partial
 
 from trafaret import Dict, String, List, Key, Int, Float
 
+__all__ = (
+    'ORDER',
+    'LOG',
+    'prepare_log',
+    'prepare_order'
+)
+
 ORDER = Dict({
     Key('store_id') >> 'storeId': String,
     Key('order_id') >> 'orderId': String,
@@ -32,9 +39,9 @@ LOG = Dict({
 }, ignore_extra='*')
 
 
-def extract(template, *args, **kwargs):
+def _extract(template, *args, **kwargs):
     return template.transform(*args, **kwargs)
 
 
-prepare_order = partial(extract, ORDER)
-prepare_log = partial(extract, LOG)
+prepare_order = partial(_extract, ORDER)
+prepare_log = partial(_extract, LOG)

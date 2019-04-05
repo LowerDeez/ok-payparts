@@ -4,6 +4,7 @@ from hashlib import sha1
 from typing import Dict
 
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.translation import ugettext_lazy as _
 
 from payparts.client import PayPartsAPIClient
 from payparts.models import Log
@@ -24,17 +25,16 @@ class PayPartsAdapter:
 
     def __init__(
             self,
-            password: str = None,
-            store_id: str = None,
             parts_count: int = 2,
             merchant_type: str = 'PP',
             response_url: str = None,
             redirect_url: str = None
     ):
-        self.password: str = password or API_PASSWORD
-        self.store_id: str = store_id or API_STORE_ID
+        self.password: str = API_PASSWORD
+        self.store_id: str = API_STORE_ID
         if not self.password or not self.store_id:
-            raise ImproperlyConfigured('You must provide password and store id.')
+            raise ImproperlyConfigured(
+                _('You must provide password and store id.'))
 
         self.api_client = self.api_client_class()
         self.parts_count: int = parts_count
@@ -68,7 +68,7 @@ class PayPartsAdapter:
         cleaned_data = {
             key: value for key, value in data.items() if value
         }
-        return prepare_order(cleaned_data)
+        return cleaned_data
 
     def create_signature(self, data: Dict) -> str:
         products = data['products']
@@ -110,7 +110,7 @@ class PayPartsAdapter:
         data.update(self.base_data)
         data['signature'] = self.create_signature(data)
         data = json.dumps(
-            self.prepare_data(data),
+            prepare_order(self.prepare_data(data)),
             ensure_ascii=False
         ).encode('utf-8')
         response = self.api_client.post(

@@ -1,7 +1,12 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from payparts.consts import STATE_CHOICES, LOG_CHOICES
+from payparts.consts import (
+    SUCCESS, FAIL,
+    CANCELED,
+    STATE_CHOICES,
+    LOG_CHOICES
+)
 
 __all__ = (
     'Log',
@@ -54,3 +59,15 @@ class Log(models.Model):
     class Meta:
         verbose_name = _('Log')
         verbose_name_plural = _('Logs')
+
+    @property
+    def is_success(self):
+        return self.state == SUCCESS
+
+    @property
+    def is_fail(self):
+        return self.state == FAIL
+
+    @property
+    def is_canceled(self):
+        return self.state == CANCELED
