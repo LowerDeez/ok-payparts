@@ -2,6 +2,7 @@ import json
 from random import randint
 from unittest import mock
 
+from django.forms import ValidationError
 from django.test import TestCase
 from django.test import RequestFactory
 from django.urls import reverse
@@ -34,6 +35,12 @@ class GetRedirectUrlUseCaseTestCase(TestCase):
             "response_url": "http://shop.com/response",
             "redirect_url": "http://shop.com/redirect"
         }
+        self.invalid_data = {
+            "order_id": f"order-{randint(1, 1000000)}",
+            "amount": 400.00,
+            "parts_count": 6,
+            "merchant_type": "PP"
+        }
 
     def test_success_payment_create(self):
         redirect_url = GetRedirectUrlUseCase().execute(self.data)
@@ -48,6 +55,10 @@ class GetRedirectUrlUseCaseTestCase(TestCase):
             redirect_url,
             f'{API_REDIRECT_URL}?token={log.token}'
         )
+
+    def test_failed_payment_create(self):
+        with self.assertRaises(ValidationError) as e:
+            GetRedirectUrlUseCase().execute(self.invalid_data)
 
 
 class PayPartsCallbackViewTestCase(TestCase):
