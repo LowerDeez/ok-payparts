@@ -3,10 +3,10 @@ from base64 import b64encode
 from hashlib import sha1
 from typing import Dict
 
-from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 
 from payparts.client import PayPartsAPIClient
+from payparts.exceptions import InvalidAuthDataError
 from payparts.models import Log
 from payparts.settings import (
     API_PASSWORD,
@@ -32,9 +32,16 @@ class PayPartsAdapter:
     ):
         self.password: str = API_PASSWORD
         self.store_id: str = API_STORE_ID
+        if not self.password:
+            raise InvalidAuthDataError(
+                code='password',
+                message=_('You must provide password.')
+            )
         if not self.password or not self.store_id:
-            raise ImproperlyConfigured(
-                _('You must provide password and store id.'))
+            raise InvalidAuthDataError(
+                code='store_id',
+                message=_('You must provide store id.')
+            )
 
         self.api_client = self.api_client_class()
         self.parts_count: int = parts_count
