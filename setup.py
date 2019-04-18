@@ -9,7 +9,7 @@ with open('requirements.txt') as f:
 setup(
     name='django-ok-payparts',
     version='0.2',
-    description='Django seo app',
+    description='Payparts',
     long_description=open('README.md').read(),
     author='Oleg Kleschunov',
     author_email='igorkleschunov@gmail.com',
