@@ -8,9 +8,9 @@ with open('requirements.txt') as f:
 
 setup(
     name='django-ok-payparts',
-    version='0.2',
-    description='Payparts',
-    long_description=open('README.md').read(),
+    version='0.3',
+    description='Django integration for API "Оплата Частями в Интернете".',
+    long_description=open('README.rst').read(),
     author='Oleg Kleschunov',
     author_email='igorkleschunov@gmail.com',
     url='https://github.com/LowerDeez/ok-payparts',
@@ -24,6 +24,7 @@ setup(
         "Operating System :: OS Independent",
         "Framework :: Django :: 2.0",
         "Framework :: Django :: 2.1",
+        "Framework :: Django :: 2.2",
         'Intended Audience :: Developers',
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

@@ -1,11 +1,11 @@
 import json
-from random import randint
 from unittest import mock
 
 from django.forms import ValidationError
 from django.test import TestCase
 from django.test import RequestFactory
 from django.urls import reverse
+from django.utils.crypto import get_random_string
 
 from payparts.use_cases import GetRedirectUrlUseCase
 from payparts.models import Log
@@ -16,7 +16,7 @@ from payparts.views import PayPartsCallbackView
 class GetRedirectUrlUseCaseTestCase(TestCase):
     def setUp(self) -> None:
         self.data = {
-            "order_id": f"order-{randint(1, 1000000)}",
+            "order_id": f"order-{get_random_string()}",
             "amount": 400.00,
             "parts_count": 6,
             "merchant_type": "PP",
@@ -36,7 +36,7 @@ class GetRedirectUrlUseCaseTestCase(TestCase):
             "redirect_url": "http://shop.com/redirect"
         }
         self.invalid_data = {
-            "order_id": f"order-{randint(1, 1000000)}",
+            "order_id": f"order-{get_random_string()}",
             "amount": 400.00,
             "parts_count": 6,
             "merchant_type": "PP"
@@ -57,7 +57,7 @@ class GetRedirectUrlUseCaseTestCase(TestCase):
         )
 
     def test_failed_payment_create(self):
-        with self.assertRaises(ValidationError) as e:
+        with self.assertRaises(ValidationError):
             GetRedirectUrlUseCase().execute(self.invalid_data)
 
 

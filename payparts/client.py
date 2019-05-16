@@ -45,8 +45,7 @@ class PayPartsAPIClient:
         headers: Dict = None
     ):
         """
-        Private method used to send request to the remote REST API
-        server.
+        Private method used to send request to the remote REST API server.
 
         Args:
             path (str): Corresponding relative path to send request.
@@ -69,8 +68,7 @@ class PayPartsAPIClient:
         response = requests.post(
             url=url,
             data=data,
-            headers=headers,
-            verify=False
+            headers=headers
         )
 
         return {

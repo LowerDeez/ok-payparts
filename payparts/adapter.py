@@ -35,12 +35,12 @@ class PayPartsAdapter:
         if not self.password:
             raise InvalidAuthDataError(
                 code='password',
-                message=_('You must provide password.')
+                message=_('You must provide a password.')
             )
         if not self.password or not self.store_id:
             raise InvalidAuthDataError(
                 code='store_id',
-                message=_('You must provide store id.')
+                message=_('You must provide a store id.')
             )
 
         self.api_client = self.api_client_class()
@@ -100,7 +100,7 @@ class PayPartsAdapter:
             self.password
         )
         return self.str_to_sign(value)
-    
+
     def validate_signature(self, data: Dict) -> bool:
         signature1 = data['signature']
         signature2 = self.str_to_sign(

@@ -30,6 +30,7 @@ class PayPartsCallbackView(View):
                 "Invalid Content-Type. "
                 "Expected to use 'application/json; charset=UTF-8'."
             )
+
         logger.debug(f"PayParts incoming POST data: {request.body}")
 
         data = json.loads(request.body)
