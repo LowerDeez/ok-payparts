@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from payparts.adapter import PayPartsAdapter
 from payparts.consts import DEFAULT_MERCHANT_TYPE, DEFAULT_PARTS_COUNT
+from payparts.exceptions import InvalidTokenError
 from payparts.forms import PayloadForm, ProductForm
 from payparts.models import Log
 from payparts.signals import (
@@ -20,11 +21,11 @@ __all__ = (
 
 class GetRedirectUrlUseCase:
     @staticmethod
-    def raise_errors(form):
+    def raise_errors(form) -> None:
         if not form.is_valid():
             raise ValidationError(form.errors)
 
-    def validate(self, data: Dict):
+    def validate(self, data: Dict) -> None:
         products = data.get('products')
         if not products:
             raise ValidationError(
@@ -33,7 +34,7 @@ class GetRedirectUrlUseCase:
         for product in products:
             self.raise_errors(ProductForm(data=product))
 
-    def execute(self, data):
+    def execute(self, data) -> str:
         data['parts_count'] = (
             data.get('parts_count') or
             DEFAULT_PARTS_COUNT
@@ -54,13 +55,21 @@ class GetRedirectUrlUseCase:
         token = result.get('token')
         if token:
             return adapter.get_redirect_url(token)
+        raise InvalidTokenError(
+            code='token',
+            message=(
+                f'Invalid token. '
+                f'State: {result.get("state", "")}. '
+                f'Error: {result.get("message", "")}'
+            )
+        )
 
 
 class ProcessCallbackUseCase:
-    def validate(self, data: Dict):
+    def validate(self, data: Dict) -> None:
         pass
 
-    def execute(self, request, data):
+    def execute(self, request, data) -> None:
         self.validate(data)
         data['state'] = data.pop('paymentState')
         adapter = PayPartsAdapter()

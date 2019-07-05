@@ -5,7 +5,7 @@ from typing import Dict
 
 from django.utils.translation import ugettext_lazy as _
 
-from payparts.client import PayPartsAPIClient
+from payparts.client import PayPartsAPIClient, Response
 from payparts.exceptions import InvalidAuthDataError
 from payparts.models import Log
 from payparts.settings import (
@@ -120,8 +120,8 @@ class PayPartsAdapter:
             prepare_order(self.prepare_data(data)),
             ensure_ascii=False
         ).encode('utf-8')
-        response = self.api_client.post(
+        response: Response = self.api_client.post(
             'payment/create',
             data
         )
-        return response['result']
+        return response.data

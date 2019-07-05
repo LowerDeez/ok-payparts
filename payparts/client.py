@@ -1,12 +1,19 @@
-from typing import Dict
+from typing import Dict, NamedTuple
 
 import requests
 
 from payparts.settings import API_BASE_URL
 
 __all__ = (
+    'Response',
     'PayPartsAPIClient',
 )
+
+
+Response = NamedTuple('Response', [
+    ('status_code', int),
+    ('data', Dict)
+])
 
 
 class PayPartsAPIClient:
@@ -39,13 +46,13 @@ class PayPartsAPIClient:
         return f'{url}{joined_args}'
 
     def post(
-        self,
-        path: str,
-        data: Dict = None,
-        headers: Dict = None
-    ):
+            self,
+            path: str,
+            data: Dict = None,
+            headers: Dict = None
+    ) -> Response:
         """
-        Private method used to send request to the remote REST API server.
+        Method used to send post request to the remote REST API server.
 
         Args:
             path (str): Corresponding relative path to send request.
@@ -53,10 +60,7 @@ class PayPartsAPIClient:
             headers (Dict, optional): Request headers.
 
         Returns:
-            Response: requests' response instance.
-
-        Raises:
-            AttributeError: Unsupported method was used.
+            Response: `Response` instance.
         """
         url = self.construct_url(path)
 
@@ -71,7 +75,7 @@ class PayPartsAPIClient:
             headers=headers
         )
 
-        return {
-            "result": response.json(),
-            "status_code": response.status_code
-        }
+        return Response(
+            status_code=response.status_code,
+            data=response.json()
+        )
