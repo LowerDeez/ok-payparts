@@ -3,7 +3,7 @@ from typing import Dict
 from django.forms import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from payparts.adapter import PayPartsAdapter
+from payparts.payparts import PayPartsAPIAdapter
 from payparts.consts import DEFAULT_MERCHANT_TYPE, DEFAULT_PARTS_COUNT
 from payparts.exceptions import InvalidTokenError
 from payparts.forms import PayloadForm, ProductForm
@@ -20,6 +20,9 @@ __all__ = (
 
 
 class GetRedirectUrlUseCase:
+    """
+    Use case to create payment and build redirect url to perform payment
+    """
     @staticmethod
     def raise_errors(form) -> None:
         if not form.is_valid():
@@ -43,18 +46,24 @@ class GetRedirectUrlUseCase:
             data.get('merchant_type') or
             DEFAULT_MERCHANT_TYPE
         )
+
         self.validate(data)
+
         order_data = {
             'order_id': data.pop('order_id'),
             'amount': data.pop('amount'),
             'products': data.pop('products')
         }
-        adapter = PayPartsAdapter(**data)
+
+        adapter = PayPartsAPIAdapter(**data)
         result = adapter.payment_create(order_data)
         adapter.create_log(result, 'payment_create')
+
         token = result.get('token')
+
         if token:
             return adapter.get_redirect_url(token)
+
         raise InvalidTokenError(
             code='token',
             message=(
@@ -66,15 +75,17 @@ class GetRedirectUrlUseCase:
 
 
 class ProcessCallbackUseCase:
-    def validate(self, data: Dict) -> None:
-        pass
-
+    """
+    Use case to process PayParts callback
+    """
     def execute(self, request, data) -> None:
-        self.validate(data)
         data['state'] = data.pop('paymentState')
-        adapter = PayPartsAdapter()
+
+        adapter = PayPartsAPIAdapter()
         log = adapter.create_log(data, 'callback')
+
         is_valid = adapter.validate_signature(data)
+
         if is_valid:
             pay_parts_success_callback.send(
                 sender=Log,

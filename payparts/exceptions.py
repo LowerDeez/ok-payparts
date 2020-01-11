@@ -1,15 +1,15 @@
 __all__ = (
-    'Error',
+    'PayPartsException',
     'InvalidAuthDataError',
     'InvalidTokenError'
 )
 
 
-class Error(AttributeError):
+class PayPartsException(AttributeError):
     pass
 
 
-class InvalidAuthDataError(Error):
+class InvalidAuthDataError(PayPartsException):
     def __init__(self, code, message):
         self.code = code
         self.message = message

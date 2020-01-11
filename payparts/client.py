@@ -6,7 +6,7 @@ from payparts.settings import API_BASE_URL
 
 __all__ = (
     'Response',
-    'PayPartsAPIClient',
+    'PayPartsRequestClient',
 )
 
 
@@ -16,7 +16,7 @@ Response = NamedTuple('Response', [
 ])
 
 
-class PayPartsAPIClient:
+class PayPartsRequestClient:
     @staticmethod
     def get_base_headers():
         return {

@@ -17,7 +17,7 @@ __all__ = (
 
 class PayPartsCallbackView(View):
     """
-    LiqPay Callback view
+    PayParts Callback view
     """
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -25,7 +25,8 @@ class PayPartsCallbackView(View):
 
     def post(self, request, *args, **kwargs):
         if not request.META.get('CONTENT_TYPE', '').startswith(
-                'application/json; charset=UTF-8'):
+                'application/json; charset=UTF-8'
+        ):
             raise AssertionError(
                 "Invalid Content-Type. "
                 "Expected to use 'application/json; charset=UTF-8'."

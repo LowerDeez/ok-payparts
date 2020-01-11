@@ -14,6 +14,9 @@ __all__ = (
 
 
 class Log(models.Model):
+    """
+    Log model to store main data from requests to PayPartsAPI
+    """
     type = models.CharField(
         _('Log type'),
         max_length=20,

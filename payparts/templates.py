@@ -1,3 +1,7 @@
+"""
+Set of templates to transform data into format, acceptable by PayParts API
+"""
+
 from functools import partial
 
 from trafaret import Dict, String, List, Key, Int, Float

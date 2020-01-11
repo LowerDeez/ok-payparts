@@ -9,6 +9,9 @@ __all__ = (
 
 
 class PayloadForm(forms.Form):
+    """
+    Form to validate data, used to create payment for PayParts API
+    """
     order_id = forms.CharField(max_length=64)
     amount = forms.FloatField(min_value=300, max_value=50000)
     parts_count = forms.IntegerField(min_value=2, max_value=25, required=False)
@@ -18,6 +21,9 @@ class PayloadForm(forms.Form):
 
 
 class ProductForm(forms.Form):
+    """
+    Form to validate product entity
+    """
     name = forms.CharField(max_length=128)
     count = forms.IntegerField(min_value=1)
     price = forms.FloatField(min_value=0.01)

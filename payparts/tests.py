@@ -12,6 +12,11 @@ from payparts.models import Log
 from payparts.settings import API_REDIRECT_URL
 from payparts.views import PayPartsCallbackView
 
+__all__ = (
+    'GetRedirectUrlUseCaseTestCase',
+    'PayPartsCallbackViewTestCase'
+)
+
 
 class GetRedirectUrlUseCaseTestCase(TestCase):
     def setUp(self) -> None:
