@@ -8,7 +8,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='django-ok-payparts',
-    version='0.3',
+    version='0.4',
     description='Django integration for API "https://bw.gitbooks.io/api-oc/content/pay.html".',
     long_description=open('README.rst').read(),
     author='Oleg Kleschunov',
