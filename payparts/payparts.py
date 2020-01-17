@@ -38,6 +38,7 @@ class PayPartsAPIAdapter:
                 code='password',
                 message=_('You must provide a password.')
             )
+
         if not self.password or not self.store_id:
             raise InvalidAuthDataError(
                 code='store_id',
@@ -72,7 +73,7 @@ class PayPartsAPIAdapter:
         return f'{API_REDIRECT_URL}?token={token}'
 
     @staticmethod
-    def prepare_data(data: Dict) -> Dict:
+    def clean_data(data: Dict) -> Dict:
         cleaned_data = {
             key: value for key, value in data.items() if value
         }
@@ -88,6 +89,7 @@ class PayPartsAPIAdapter:
                 for item in products
             ]
         )
+
         value = (
             self.password +
             self.store_id +
@@ -123,10 +125,12 @@ class PayPartsAPIAdapter:
         """
         data.update(self.base_data)
         data['signature'] = self.create_signature(data)
+
         data = json.dumps(
-            prepare_order(self.prepare_data(data)),
+            prepare_order(self.clean_data(data)),
             ensure_ascii=False
         ).encode('utf-8')
+
         response: Response = self.client.post(
             'payment/create',
             data

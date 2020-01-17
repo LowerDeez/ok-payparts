@@ -30,10 +30,13 @@ class GetRedirectUrlUseCase:
 
     def validate(self, data: Dict) -> None:
         products = data.get('products')
+
         if not products:
             raise ValidationError(
                 _('You must provide products to create payment.'))
+
         self.raise_errors(PayloadForm(data=data))
+
         for product in products:
             self.raise_errors(ProductForm(data=product))
 
